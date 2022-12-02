@@ -1,25 +1,24 @@
 const client = require('./clients');
 const { kafkaManager } = require('../commons')
 
-const url = 'www.google.com'
-const payload = {
-  "name": "teo",
-  "age": 28
-}
+const start = async (topicsToConsume) => {
+  try {
+    console.log('consuming...')
+    const consumer = kafkaManager.getConsumer()
 
-const start = async () => {
-  console.log('consuming...')
-  const consumer = kafkaManager.getConsumer()
+    await consumer.connect()
+    await consumer.subscribe({ topics: topicsToConsume, fromBeginning: true })
 
-  await consumer.run({
-    eachMessage: async ({ topic, partition, message, heartbeat, pause }) => {
-      console.log({
-        key: message.key.toString(),
-        value: message.value.toString(),
-        headers: message.headers
-      })
-    }
-  })
+    await consumer.run({
+      autoCommit: false,
+      eachMessage: async ({ _topic, _partition, message, _heartbeat, _pause }) => {
+        const { url, payload } = JSON.parse(message.value.toString())
+          await client.makePostRequest({ url, payload })
+      }
+    })
+  } catch (err) {
+    console.log('Error sending requests: ', err)
+  }
 }
 
 module.exports = {
