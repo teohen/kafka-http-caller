@@ -1,23 +1,23 @@
 const client = require('./clients');
 const { kafkaManager } = require('../commons')
+const { producer } = require('../producer')
+
+const processMessage = async ({ topic, _partition, message, _heartbeat, _pause }) => {
+  const messageValue = JSON.parse(message.value.toString())
+  console.log('VALUE', messageValue)
+  try {
+    await client.makePostRequest({ url: messageValue.url, payload: messageValue.payload })
+  } catch (err) {
+    console.log('Error sending the request')
+    await producer.produceMessage(message)
+  }
+};
 
 const start = async (topicsToConsume) => {
   try {
-    console.log('consuming...')
-    const consumer = kafkaManager.getConsumer()
-
-    await consumer.connect()
-    await consumer.subscribe({ topics: topicsToConsume, fromBeginning: true })
-
-    await consumer.run({
-      autoCommit: false,
-      eachMessage: async ({ _topic, _partition, message, _heartbeat, _pause }) => {
-        const { url, payload } = JSON.parse(message.value.toString())
-          await client.makePostRequest({ url, payload })
-      }
-    })
+    await kafkaManager.consumeTopic(topicsToConsume, processMessage)
   } catch (err) {
-    console.log('Error sending requests: ', err)
+    console.log('Error handling the schedules', err)
   }
 }
 
