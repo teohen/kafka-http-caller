@@ -4,9 +4,8 @@ const { producer } = require('../producer')
 
 const processMessage = async ({ topic, _partition, message, _heartbeat, _pause }) => {
   const messageValue = JSON.parse(message.value.toString())
-  console.log('VALUE', messageValue)
   try {
-    await client.makePostRequest({ url: messageValue.url, payload: messageValue.payload })
+    await client.makePostRequest({ url: messageValue.url, payload: messageValue.targetPayload })
   } catch (err) {
     console.log('Error sending the request')
     await producer.produceMessage(message)

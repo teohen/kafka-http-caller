@@ -23,10 +23,6 @@ const getClientAdmin = () => {
 }
 
 const produceMessage = async (payload, topic, key, headers) => {
-  console.log('PRODUCING',
-    {
-      payload, topic, key, headers
-    })
   await producer.connect()
   await producer.send({
     topic,
